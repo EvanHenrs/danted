@@ -1,17 +1,14 @@
 #!/bin/bash
-
 # Check if user provided two IP addresses, a gateway, and a port
 if [ "$#" -ne 4 ]; then
     echo "Usage: $0 <IP1> <IP2> <GATEWAY> <PORT>"
     exit 1
 fi
-
 # Assign IP addresses, gateway, and port to variables
 IP1=$1
 IP2=$2
 GATEWAY=$3
 PORT=$4
-
 # Check if dos2unix is installed
 if ! command -v dos2unix &> /dev/null; then
     echo "dos2unix could not be found, installing..."
