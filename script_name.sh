@@ -15,15 +15,12 @@ if ! command -v dos2unix &> /dev/null; then
     sudo apt-get update
     sudo apt-get install -y dos2unix
 fi
-
 # Backup original interfaces file
 sudo cp /etc/network/interfaces /etc/network/interfaces.backup
-
 # Create new interfaces file
 echo "# The loopback network interface
 auto lo
 iface lo inet loopback
-
 # Primary network interface
 auto eth0
 iface eth0 inet static
@@ -40,7 +37,6 @@ iface eth0:1 inet static
 # Restart networking to apply changes
 sudo /etc/init.d/networking restart
 sudo /etc/init.d/sockd stop
-
 # Dante Socks5 Proxy common configuration
 DANTE_COMMON="
 clientmethod: none
