@@ -21,7 +21,10 @@ echo "📌 用户列表: ${USERS[@]}"
 
 # ===================== 安装 Dante Socks5 =====================
 echo "[1] 更新系统并安装 Dante"
-sudo apt update && sudo apt install -y dante-server
+if ! sudo apt update && sudo apt install -y dante-server; then
+    echo "❌ 安装 Dante 失败，请检查网络或包源配置。"
+    exit 1
+fi
 
 # ===================== 配置 Dante Socks5 =====================
 echo "[2] 配置 Dante 代理服务"
@@ -69,28 +72,42 @@ for user in "${USERS[@]}"; do
     PASSWORD=$(echo $user | cut -d':' -f2)
 
     # 创建用户
-    sudo useradd -r -s /bin/false $USERNAME 2>/dev/null
-    echo "$USERNAME:$PASSWORD" | sudo chpasswd
-    echo "    ✅ 用户 $USERNAME 创建成功！"
+    if ! sudo useradd -r -s /bin/false $USERNAME 2>/dev/null; then
+        echo "❌ 用户 $USERNAME 创建失败！"
+    else
+        echo "$USERNAME:$PASSWORD" | sudo chpasswd
+        echo "    ✅ 用户 $USERNAME 创建成功！"
+    fi
 done
 
 # ===================== 启动 Dante 并检查状态 =====================
 echo "[5] 启动 Dante 代理服务"
-sudo systemctl enable danted
-sudo systemctl restart danted
+if ! sudo systemctl enable danted; then
+    echo "❌ 启用 Dante 服务失败！"
+    exit 1
+fi
+if ! sudo systemctl restart danted; then
+    echo "❌ 重启 Dante 服务失败！"
+    exit 1
+fi
 sudo systemctl status danted --no-pager --lines=5
 
 # ===================== 确保端口监听 =====================
 echo "[6] 检查代理端口监听状态"
-sudo netstat -tulnp | grep sockd || sudo ss -tulnp | grep sockd
+if ! sudo netstat -tulnp | grep -q sockd && ! sudo ss -tulnp | grep -q sockd; then
+    echo "❌ 代理端口未监听，请检查配置。"
+    exit 1
+fi
 
 # ===================== 测试代理 =====================
 TEST_USER=$(echo ${USERS[0]} | cut -d':' -f1)
 TEST_PASS=$(echo ${USERS[0]} | cut -d':' -f2)
-PUBLIC_IP=$(curl -s ifconfig.me)
 
 echo "[7] 测试 Socks5 代理访问外网"
-curl --proxy socks5://$TEST_USER:$TEST_PASS@$PUBLIC_IP:$PORT myip.ipip.net
+if ! curl --proxy socks5://$TEST_USER:$TEST_PASS@$IP:$PORT myip.ipip.net; then
+    echo "❌ 代理测试失败，请检查配置。"
+    exit 1
+fi
 
 echo "🎉 Dante Socks5 代理安装完成！"
 echo "📌 代理地址：$IP:$PORT"
